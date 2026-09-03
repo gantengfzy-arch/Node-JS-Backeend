@@ -11,17 +11,20 @@ const { seedDummyUsers } = require('./seed');
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Site Key Testing Bawaan Google (Ganti dengan process.env.RECAPTCHA_SITE_KEY di production)
-const SITE_KEY = process.env.RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
-const SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY || '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe';
+const SWAGGER_CSS_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui.min.css";
+const SWAGGER_JS_URLS = [
+  "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-bundle.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-standalone-preset.js"
+];
 
-// Middleware Dasar
+const SITE_KEY = process.env.RECAPTCHA_SITE_KEY;
+const SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
+
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true })); // Wajib untuk membaca data form dari halaman gate
+app.use(express.urlencoded({ extended: true })); 
 app.use(cookieParser());
 
-// HTML Halaman Gerbang (Gate)
 const gateHTML = `
 <!DOCTYPE html>
 <html lang="id">
@@ -55,15 +58,13 @@ const gateHTML = `
 </html>
 `;
 
-// Middleware Begal Swagger
 const swaggerGate = (req, res, next) => {
     if (req.cookies && req.cookies.captcha_passed === 'true') {
-        return next(); // Lolos, tampilkan Swagger
+        return next();
     }
-    res.send(gateHTML); // Belum verifikasi, tahan di gerbang
+    res.send(gateHTML);
 };
 
-// Endpoint Proses Verifikasi Gerbang
 app.post('/verify-gate', async (req, res) => {
     const token = req.body['g-recaptcha-response'];
 
@@ -81,7 +82,6 @@ app.post('/verify-gate', async (req, res) => {
         const data = await response.json();
 
         if (data.success) {
-            // Set cookie berlaku selama 1 jam
             res.cookie('captcha_passed', 'true', { maxAge: 3600000, httpOnly: true });
             return res.redirect('/sandbox-docs');
         } else {
@@ -92,13 +92,14 @@ app.post('/verify-gate', async (req, res) => {
     }
 });
 
-// Swagger Route (Dibegal oleh swaggerGate)
 app.use(
     '/sandbox-docs',
     swaggerGate,
     swaggerUi.serve,
     swaggerUi.setup(swaggerSpec, {
         customSiteTitle: 'Fortress Sandbox',
+        customCssUrl: SWAGGER_CSS_URL,
+        customJs: SWAGGER_JS_URLS,
         swaggerOptions: { persistAuthorization: true }
     })
 );
@@ -113,7 +114,6 @@ app.get('/', (req, res) => {
     });
 });
 
-// Global Error Handler
 app.use((err, req, res, next) => {
     console.error('SANDBOX ERROR:', err);
     res.status(500).json({
