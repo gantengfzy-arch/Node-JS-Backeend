@@ -7,11 +7,11 @@ const spec = swaggerJsdoc({
             title: 'Fortress Sandbox API',
             version: '1.0.0',
             description:
-                'Ruang uji. Hanya title + description. Max 3 data. Sesi 30 menit. Max 3 user. Token sandbox (bukan JWT Fortress). Jangan isi data sensitif.'
+                'Ruang uji. Hanya title + description. Max 3 data. Sesi 30 menit. Max 3 user. Jangan isi data sensitif.'
         },
         servers: [
             {
-                url: process.env.API_PUBLIC_URL || 'http://localhost:5001/api',
+                url: process.env.API_PUBLIC_URL,
                 description: 'Sandbox'
             }
         ],
